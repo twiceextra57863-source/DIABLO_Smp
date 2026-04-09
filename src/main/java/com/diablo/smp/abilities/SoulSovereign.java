@@ -1,58 +1,49 @@
 package com.diablo.smp.abilities;
 
 import com.diablo.smp.DiabloSMP;
-import com.diablo.smp.manager.AbilityManager;
-import org.bukkit.ChatColor;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import org.bukkit.*;
+import org.bukkit.entity.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 public class SoulSovereign {
 
-    private static final String ABILITY_NAME = "soul_sovereign";
-    private static final int COOLDOWN = 45; // seconds
-    private static final double RADIUS = 7.0;
-
-    public static void execute(DiabloSMP plugin, Player player) {
-        AbilityManager manager = plugin.getAbilityManager();
-
-        if (manager.isOnCooldown(player, ABILITY_NAME)) {
-            player.sendMessage(ChatColor.RED + "Soul Sovereign is on cooldown for " 
-                    + manager.getRemainingCooldown(player, ABILITY_NAME) + " seconds.");
-            return;
-        }
-
-        // Ability Logic: Steal health from nearby entities
-        int soulsStolen = 0;
-        for (Entity entity : player.getNearbyEntities(RADIUS, RADIUS, RADIUS)) {
-            if (entity instanceof LivingEntity && entity != player) {
-                LivingEntity target = (LivingEntity) entity;
-                
-                // Prevent damaging trusted players
-                if (target instanceof Player) {
-                    Player tPlayer = (Player) target;
-                    if (plugin.getTrustManager().isTrusted(player.getUniqueId(), tPlayer.getUniqueId())) {
-                        continue;
-                    }
+    public static void stageOne(Player p, Entity target, DiabloSMP plugin) {
+        if (!(target instanceof LivingEntity living)) return;
+        p.sendMessage("§d§lSoul Swapped!");
+        Location statueLoc = p.getLocation();
+        
+        new BukkitRunnable() {
+            int timer = 30;
+            public void run() {
+                if (timer <= 0) { 
+                    p.teleport(statueLoc);
+                    this.cancel(); 
+                    return; 
                 }
-
-                target.damage(4.0, player);
-                target.getWorld().spawnParticle(Particle.SOUL, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.05);
-                soulsStolen++;
+                // Chain Particle
+                p.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, p.getLocation(), 5);
+                timer--;
             }
-        }
+        }.runTaskTimer(plugin, 0, 20);
+    }
 
-        if (soulsStolen > 0) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200, soulsStolen - 1));
-            player.playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1.0f, 0.5f);
-            player.sendMessage(ChatColor.DARK_PURPLE + "You have harvested " + soulsStolen + " souls!");
-            manager.setCooldown(player, ABILITY_NAME, COOLDOWN);
-        } else {
-            player.sendMessage(ChatColor.GRAY + "No souls nearby to harvest...");
+    public static void stageTwo(Player p, LivingEntity target) {
+        target.setVelocity(p.getLocation().getDirection().multiply(2).setY(1));
+        p.getWorld().spawnParticle(Particle.EXPLOSION, target.getLocation(), 10);
+    }
+
+    public static void stageThree(Player p) {
+        for (Entity e : p.getNearbyEntities(80, 80, 80)) {
+            if (e instanceof LivingEntity le && e != p) {
+                le.damage(6.0);
+                Location pLoc = p.getLocation();
+                p.teleport(le.getLocation());
+                le.teleport(pLoc);
+                p.getWorld().spawnParticle(Particle.REVERSE_PORTAL, p.getLocation(), 100);
+                break;
+            }
         }
     }
 }
