@@ -1,15 +1,10 @@
 name: DiabloSMP
-version: '${project.version}'
+version: 1.0
 main: com.diablo.smp.DiabloSMP
-api-version: '1.20'
-authors: [ FlameAI ]
-description: Custom DiabloSMP core plugin providing abilities and security.
-
+api-version: 1.21
 commands:
   diablo:
-    description: DiabloSMP admin commands.
-    permission: diablosmp.admin
-    usage: /diablo <give>
+    description: Admin Command
+    permission: diablo.admin
   trust:
-    description: Trust another player to prevent friendly fire.
-    usage: /trust <add|remove|list> [player]
+    description: Trust command
