@@ -4,7 +4,7 @@ main: com.diablo.smp.DiabloSMP
 api-version: 1.21
 commands:
   diablo:
-    description: Admin Command
+    description: Main Admin Command
     permission: diablo.admin
   trust:
-    description: Trust command
+    description: Trust a player for trading
