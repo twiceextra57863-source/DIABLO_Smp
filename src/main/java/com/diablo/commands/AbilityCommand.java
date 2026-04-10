@@ -78,92 +78,194 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         }
         
         return true;
+package com.diablosmp.commands;
+
+import com.diablosmp.DiabloSmpPlugin;
+import com.diablosmp.abilities.AbilityType;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class AbilityCommand implements CommandExecutor, TabCompleter {
+    
+    private final DiabloSmpPlugin plugin;
+    
+    public AbilityCommand(DiabloSmpPlugin plugin) {
+        this.plugin = plugin;
     }
     
-    private void giveAbility(CommandSender sender, String playerName, String abilityName) {
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length == 0) {
+            sendGrimoire(sender);
+            return true;
+        }
+        
+        switch (args[0].toLowerCase()) {
+            case "bestow":
+                if (!sender.hasPermission("abyssal.archon")) {
+                    sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "You lack the Archon's authority! ⬡");
+                    return true;
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatColor.DARK_PURPLE + "⬡ " + ChatColor.LIGHT_PURPLE + "Usage: /abyssal bestow <player> <power> ⬡");
+                    return true;
+                }
+                bestowPower(sender, args[1], args[2]);
+                break;
+                
+            case "cleanse":
+                if (!sender.hasPermission("abyssal.archon")) {
+                    sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "You lack the Archon's authority! ⬡");
+                    return true;
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatColor.DARK_PURPLE + "⬡ " + ChatColor.LIGHT_PURPLE + "Usage: /abyssal cleanse <player> <power> ⬡");
+                    return true;
+                }
+                cleansePower(sender, args[1], args[2]);
+                break;
+                
+            case "compendium":
+                if (args.length > 1) {
+                    showPlayerCompendium(sender, args[1]);
+                } else {
+                    showCompendium(sender);
+                }
+                break;
+                
+            case "awakening":
+                if (!sender.hasPermission("abyssal.archon")) {
+                    sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "You lack the Archon's authority! ⬡");
+                    return true;
+                }
+                plugin.reloadConfig();
+                sender.sendMessage(ChatColor.DARK_PURPLE + "⬡ " + ChatColor.LIGHT_PURPLE + "The Abyss has been awakened anew! ⬡");
+                break;
+                
+            default:
+                sendGrimoire(sender);
+                break;
+        }
+        
+        return true;
+    }
+    
+    private void bestowPower(CommandSender sender, String playerName, String powerName) {
         Player target = Bukkit.getPlayer(playerName);
         if (target == null) {
-            sender.sendMessage(ChatColor.RED + "Player not found!");
+            sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "That soul does not exist in this realm! ⬡");
             return;
         }
         
-        AbilityType type = getAbilityType(abilityName);
+        AbilityType type = getPowerByName(powerName);
         if (type == null) {
-            sender.sendMessage(ChatColor.RED + "Invalid ability! Available: " + getAbilityList());
+            sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "Unknown Abyssal Power! Available powers: " + getPowerList() + " ⬡");
             return;
         }
         
         plugin.getAbilityManager().giveAbility(target, type);
-        sender.sendMessage(ChatColor.GREEN + "Gave " + type.getDisplayName() + 
-            ChatColor.GREEN + " to " + target.getName());
+        sender.sendMessage(type.getChatColor() + "⬡ " + ChatColor.GOLD + "Bestowed " + 
+            type.getDisplayName() + ChatColor.GOLD + " upon " + target.getName() + " ⬡");
     }
     
-    private void removeAbility(CommandSender sender, String playerName, String abilityName) {
+    private void cleansePower(CommandSender sender, String playerName, String powerName) {
         Player target = Bukkit.getPlayer(playerName);
         if (target == null) {
-            sender.sendMessage(ChatColor.RED + "Player not found!");
+            sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "That soul does not exist in this realm! ⬡");
             return;
         }
         
-        AbilityType type = getAbilityType(abilityName);
+        AbilityType type = getPowerByName(powerName);
         if (type == null) {
-            sender.sendMessage(ChatColor.RED + "Invalid ability!");
+            sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "Unknown Abyssal Power! ⬡");
             return;
         }
         
         plugin.getAbilityManager().removeAbility(target, type);
-        sender.sendMessage(ChatColor.RED + "Removed " + type.getDisplayName() + 
-            ChatColor.RED + " from " + target.getName());
+        sender.sendMessage(type.getChatColor() + "⬡ " + ChatColor.RED + "Cleansed " + 
+            type.getDisplayName() + ChatColor.RED + " from " + target.getName() + "'s soul ⬡");
     }
     
-    private void listAbilities(CommandSender sender, String playerName) {
-        if (playerName != null) {
-            Player target = Bukkit.getPlayer(playerName);
-            if (target == null) {
-                sender.sendMessage(ChatColor.RED + "Player not found!");
-                return;
-            }
-            sender.sendMessage(ChatColor.GOLD + "=== " + target.getName() + "'s Abilities ===");
-            // Show player's abilities
+    private void showCompendium(CommandSender sender) {
+        sender.sendMessage("");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        sender.sendMessage(ChatColor.LIGHT_PURPLE + "       ᑕOᗰᑭEᑎᗪIᑌᗰ Oᖴ ᗩᗷYᔕᔕᗩᒪ ᑭOᗯEᖇᔕ");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        sender.sendMessage("");
+        
+        for (AbilityType type : AbilityType.values()) {
+            sender.sendMessage(type.getChatColor() + "  ⬡ " + ChatColor.GOLD + type.getSimpleName() + 
+                ChatColor.GRAY + " - " + type.getDisplayName());
+        }
+        
+        sender.sendMessage("");
+        sender.sendMessage(ChatColor.DARK_GRAY + "Use /abyssal compendium <player> to view awakened powers");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+    }
+    
+    private void showPlayerCompendium(CommandSender sender, String playerName) {
+        Player target = Bukkit.getPlayer(playerName);
+        if (target == null) {
+            sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "That soul does not exist in this realm! ⬡");
+            return;
+        }
+        
+        List<AbilityType> abilities = plugin.getAbilityManager().getPlayerAbilities(target);
+        
+        sender.sendMessage("");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        sender.sendMessage(ChatColor.LIGHT_PURPLE + "   " + target.getName() + "'ᔕ ᗩᗯᗩKEᑎEᗪ ᑭOᗯEᖇᔕ");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        
+        if (abilities.isEmpty()) {
+            sender.sendMessage(ChatColor.GRAY + "   This soul has not awakened any powers...");
         } else {
-            sender.sendMessage(ChatColor.GOLD + "=== Available Abilities ===");
-            for (AbilityType type : AbilityType.values()) {
-                sender.sendMessage(type.getChatColor() + "✦ " + type.getDisplayName());
+            for (AbilityType type : abilities) {
+                sender.sendMessage(type.getChatColor() + "   ⬡ " + type.getDisplayName());
             }
         }
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
     }
     
-    private void showInfo(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "=== Diablo SMP Plugin Info ===");
-        sender.sendMessage(ChatColor.YELLOW + "Version: " + ChatColor.WHITE + "1.0.0");
-        sender.sendMessage(ChatColor.YELLOW + "Author: " + ChatColor.WHITE + "YourName");
-        sender.sendMessage(ChatColor.YELLOW + "Abilities: " + ChatColor.WHITE + AbilityType.values().length);
-        sender.sendMessage(ChatColor.GRAY + "Use /abilities to see all powers!");
+    private void sendGrimoire(CommandSender sender) {
+        sender.sendMessage("");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        sender.sendMessage(ChatColor.LIGHT_PURPLE + "         GᖇIᗰOIᖇE Oᖴ TᕼE ᗩᗷYᔕᔕ");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        sender.sendMessage("");
+        sender.sendMessage(ChatColor.GOLD + "/abyssal bestow <player> <power> " + ChatColor.GRAY + "- Grant Abyssal Power");
+        sender.sendMessage(ChatColor.GOLD + "/abyssal cleanse <player> <power> " + ChatColor.GRAY + "- Remove Abyssal Power");
+        sender.sendMessage(ChatColor.GOLD + "/abyssal compendium [player] " + ChatColor.GRAY + "- View Powers");
+        sender.sendMessage(ChatColor.GOLD + "/abyssal awakening " + ChatColor.GRAY + "- Reload the Abyss");
+        sender.sendMessage(ChatColor.GOLD + "/soulbind <player> " + ChatColor.GRAY + "- Bind souls for 5 minutes");
+        sender.sendMessage("");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡ " + ChatColor.LIGHT_PURPLE + "Double Crouch to cycle through power stages! " + ChatColor.DARK_PURPLE + "⬡");
+        sender.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
     }
     
-    private void sendHelp(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "=== Diablo SMP Commands ===");
-        sender.sendMessage(ChatColor.YELLOW + "/ability give <player> <ability> " + ChatColor.GRAY + "- Give ability");
-        sender.sendMessage(ChatColor.YELLOW + "/ability remove <player> <ability> " + ChatColor.GRAY + "- Remove ability");
-        sender.sendMessage(ChatColor.YELLOW + "/ability list [player] " + ChatColor.GRAY + "- List abilities");
-        sender.sendMessage(ChatColor.YELLOW + "/trust <player> " + ChatColor.GRAY + "- Trust player for 5 min");
-        sender.sendMessage(ChatColor.YELLOW + "/diablo reload " + ChatColor.GRAY + "- Reload plugin");
-        sender.sendMessage(ChatColor.YELLOW + "/diablo info " + ChatColor.GRAY + "- Plugin info");
-    }
-    
-    private AbilityType getAbilityType(String name) {
+    private AbilityType getPowerByName(String name) {
         for (AbilityType type : AbilityType.values()) {
-            if (type.name().equalsIgnoreCase(name) || 
-                type.getDisplayName().equalsIgnoreCase(name)) {
+            if (type.getSimpleName().equalsIgnoreCase(name) || 
+                type.name().equalsIgnoreCase(name)) {
                 return type;
             }
         }
         return null;
     }
     
-    private String getAbilityList() {
+    private String getPowerList() {
         return Arrays.stream(AbilityType.values())
-            .map(AbilityType::getDisplayName)
+            .map(AbilityType::getSimpleName)
             .collect(Collectors.joining(", "));
     }
     
@@ -172,17 +274,17 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<>();
         
         if (args.length == 1) {
-            completions.addAll(Arrays.asList("give", "remove", "list", "reload", "info"));
+            completions.addAll(Arrays.asList("bestow", "cleanse", "compendium", "awakening"));
         } else if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("remove")) {
+            if (args[0].equalsIgnoreCase("bestow") || args[0].equalsIgnoreCase("cleanse")) {
                 Bukkit.getOnlinePlayers().forEach(p -> completions.add(p.getName()));
-            } else if (args[0].equalsIgnoreCase("list")) {
+            } else if (args[0].equalsIgnoreCase("compendium")) {
                 Bukkit.getOnlinePlayers().forEach(p -> completions.add(p.getName()));
             }
         } else if (args.length == 3) {
-            if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("remove")) {
+            if (args[0].equalsIgnoreCase("bestow") || args[0].equalsIgnoreCase("cleanse")) {
                 for (AbilityType type : AbilityType.values()) {
-                    completions.add(type.getDisplayName());
+                    completions.add(type.getSimpleName());
                 }
             }
         }
