@@ -1,0 +1,34 @@
+# Diablo SMP Plugin Configuration
+# Configure all aspects of the plugin here
+
+settings:
+  prefix: "&5✧ &dDiablo SMP &5✧ &7»"
+  language: "en"
+  debug: false
+
+abilities:
+  soul_reaper:
+    cooldown:
+      stage1: 45
+      stage2: 30
+      stage3: 60
+    damage:
+      stage3: 8.0
+    duration:
+      stage1: 30
+    radius:
+      stage3: 80
+
+trust:
+  duration: 300
+  warning_time: 60
+
+particles:
+  density: 1.0
+  visibility_range: 50
+
+messages:
+  no_permission: "&cYou don't have permission to do this!"
+  ability_cooldown: "&cAbility on cooldown! &e{time}s remaining"
+  ability_activated: "&aAbility activated!"
+  trust_expired: "&cYour trust has expired!"
