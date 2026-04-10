@@ -2,8 +2,8 @@ package com.diablosmp.abilities;
 
 import com.diablosmp.DiabloSmpPlugin;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -26,7 +26,6 @@ public class AbilityManager {
         UUID playerId = player.getUniqueId();
         List<PlayerAbility> abilities = playerAbilities.computeIfAbsent(playerId, k -> new ArrayList<>());
         
-        // Check if player already has this ability
         for (PlayerAbility ability : abilities) {
             if (ability.getType() == type) {
                 return;
@@ -36,7 +35,6 @@ public class AbilityManager {
         PlayerAbility newAbility = new PlayerAbility(type);
         abilities.add(newAbility);
         
-        // Give ability book to player
         ItemStack abilityBook = createAbilityBook(type);
         if (player.getInventory().firstEmpty() != -1) {
             player.getInventory().addItem(abilityBook);
@@ -56,7 +54,6 @@ public class AbilityManager {
             abilities.removeIf(ability -> ability.getType() == type);
         }
         
-        // Remove ability book from inventory
         player.getInventory().remove(Material.ENCHANTED_BOOK);
         
         player.sendMessage(ChatColor.RED + "Your " + type.getDisplayName() + 
@@ -99,7 +96,6 @@ public class AbilityManager {
             }
         }
         
-        // Remove book from hand
         player.getInventory().setItemInMainHand(null);
         
         player.sendMessage(type.getChatColor() + "✧ " + type.getDisplayName() + 
@@ -137,12 +133,12 @@ public class AbilityManager {
         
         int stage = currentStage.getOrDefault(player.getUniqueId(), 1);
         
-        // Handle crouch for stage 3
         if (stage == 3 && !soulReaperAbility.isSoulStormReady(player)) {
             soulReaperAbility.handleCrouch(player);
             return;
         }
         
+        // Fixed: Added Entity import and proper target acquisition
         Entity target = player.getTargetEntity(30);
         
         switch (stage) {
@@ -154,8 +150,6 @@ public class AbilityManager {
             case 2:
                 if (target != null) {
                     soulReaperAbility.activateStage2(player, target);
-                } else if (soulReaperAbility.hasActiveGravityLink(player)) {
-                    soulReaperAbility.launchGravityLinked(player);
                 }
                 break;
             case 3:
