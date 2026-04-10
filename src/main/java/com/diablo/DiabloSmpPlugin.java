@@ -37,16 +37,27 @@ public class DiabloSmpPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BookListener(this), this);
         getServer().getPluginManager().registerEvents(new TrustListener(this), this);
         
-        // Register commands with UNIQUE names
-        getCommand("abyssal").setExecutor(new AbilityCommand(this));
-        getCommand("soulbind").setExecutor(new TrustCommand(this));
+        // Register commands with SIMPLE names
+        if (getCommand("ability") != null) {
+            getCommand("ability").setExecutor(new AbilityCommand(this));
+            getCommand("ability").setTabCompleter(new AbilityCommand(this));
+        }
         
-        // Register tab completers
-        getCommand("abyssal").setTabCompleter(new AbilityCommand(this));
-        getCommand("soulbind").setTabCompleter(new TrustCommand(this));
+        if (getCommand("trust") != null) {
+            getCommand("trust").setExecutor(new TrustCommand(this));
+            getCommand("trust").setTabCompleter(new TrustCommand(this));
+        }
         
-        getLogger().info("§5⬡ §dᗪIᗩᗷᒪO ᔕᗰᑭ §5⬡ §7» §aEᑎᕼᗩᑎᑕEᗪ ᗯITᕼ ᗪᗩᖇK EᔕᔕEᑎᑕE!");
-        getLogger().info("§5⬡ §dᑌᑎᒪEᗩᔕᕼ TᕼE ᑭOᗯEᖇ Oᖴ TᕼE ᗩᗷYᔕᔕ §5⬡");
+        if (getCommand("diablo") != null) {
+            getCommand("diablo").setExecutor(new AbilityCommand(this));
+            getCommand("diablo").setTabCompleter(new AbilityCommand(this));
+        }
+        
+        getLogger().info("§5=================================");
+        getLogger().info("§d   Diablo SMP Plugin Enabled!");
+        getLogger().info("§5=================================");
+        getLogger().info("§7Commands: /ability, /trust, /diablo");
+        getLogger().info("§5=================================");
     }
     
     @Override
@@ -54,7 +65,9 @@ public class DiabloSmpPlugin extends JavaPlugin {
         if (abilityManager != null) {
             abilityManager.saveAllData();
         }
-        getLogger().info("§5⬡ §cTᕼE ᗩᗷYᔕᔕ ᑕᒪᗩIᗰᔕ ᗩᑎOTᕼEᖇ ᔕOᑌᒪ... §5⬡");
+        getLogger().info("§5=================================");
+        getLogger().info("§c   Diablo SMP Plugin Disabled!");
+        getLogger().info("§5=================================");
     }
     
     public static DiabloSmpPlugin getInstance() {
