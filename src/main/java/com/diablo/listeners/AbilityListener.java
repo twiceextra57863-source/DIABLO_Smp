@@ -4,6 +4,8 @@ import com.diablosmp.DiabloSmpPlugin;
 import com.diablosmp.abilities.AbilityType;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -51,7 +53,6 @@ public class AbilityListener implements Listener {
                         event.setCancelled(true);
                         absorbAbility(player, AbilityType.SOUL_REAPER);
                     }
-                    // Add more ability checks here
                 }
             }
         }
@@ -61,7 +62,7 @@ public class AbilityListener implements Listener {
     public void onPlayerSneak(PlayerToggleSneakEvent event) {
         Player player = event.getPlayer();
         
-        if (!event.isSneaking()) return; // Only handle when player starts sneaking
+        if (!event.isSneaking()) return;
         
         if (!plugin.getAbilityManager().hasAbility(player, AbilityType.SOUL_REAPER)) return;
         
@@ -70,20 +71,17 @@ public class AbilityListener implements Listener {
         Long lastSneak = lastSneakTime.get(playerId);
         
         if (lastSneak != null && currentTime - lastSneak < 1000) {
-            // Double sneak detected
             int count = sneakCount.getOrDefault(playerId, 0) + 1;
             sneakCount.put(playerId, count);
             
             if (count >= 2) {
-                // Switch ability stage
                 plugin.getAbilityManager().switchStage(player);
                 sneakCount.put(playerId, 0);
                 
-                // Visual effect
-                player.getWorld().spawnParticle(org.bukkit.Particle.SPELL_WITCH, 
+                // Fixed: Use correct Particle name for 1.21.3
+                player.getWorld().spawnParticle(Particle.WITCH, 
                     player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0);
-                player.playSound(player.getLocation(), 
-                    org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.5f);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.5f);
             }
             
             lastSneakTime.put(playerId, currentTime);
@@ -92,7 +90,6 @@ public class AbilityListener implements Listener {
             lastSneakTime.put(playerId, currentTime);
         }
         
-        // Reset sneak count after 1.5 seconds
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             sneakCount.remove(playerId);
         }, 30L);
