@@ -38,7 +38,7 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             if (args.length < 3) {
-                sender.sendMessage(ChatColor.RED + "Usage: /ability give <player> <ability>");
+                sender.sendMessage(ChatColor.RED + "Usage: /" + label + " give <player> <ability>");
                 return true;
             }
             giveAbility(sender, args[1], args[2]);
@@ -49,7 +49,7 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             if (args.length < 3) {
-                sender.sendMessage(ChatColor.RED + "Usage: /ability remove <player> <ability>");
+                sender.sendMessage(ChatColor.RED + "Usage: /" + label + " remove <player> <ability>");
                 return true;
             }
             removeAbility(sender, args[1], args[2]);
@@ -60,6 +60,18 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
             } else {
                 listAllAbilities(sender);
             }
+        }
+        else if (subCommand.equals("reload")) {
+            if (!sender.hasPermission("diablosmp.admin")) {
+                sender.sendMessage(ChatColor.RED + "You don't have permission!");
+                return true;
+            }
+            plugin.reloadConfig();
+            plugin.getConfigManager().reloadConfig();
+            sender.sendMessage(ChatColor.GREEN + "Diablo SMP Plugin reloaded!");
+        }
+        else if (subCommand.equals("info") || subCommand.equals("help")) {
+            sendHelp(sender);
         }
         else {
             sendHelp(sender);
@@ -78,11 +90,13 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         AbilityType type = getAbilityByName(abilityName);
         if (type == null) {
             sender.sendMessage(ChatColor.RED + "Unknown ability! Available: " + getAbilityList());
+            sender.sendMessage(ChatColor.GRAY + "Example: SoulReaper, VoidWalker, BloodMage");
             return;
         }
         
         plugin.getAbilityManager().giveAbility(target, type);
-        sender.sendMessage(ChatColor.GREEN + "Gave " + type.getDisplayName() + ChatColor.GREEN + " to " + target.getName());
+        sender.sendMessage(ChatColor.GREEN + "Gave " + type.getDisplayName() + 
+            ChatColor.GREEN + " to " + target.getName());
     }
     
     private void removeAbility(CommandSender sender, String playerName, String abilityName) {
@@ -99,7 +113,8 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         }
         
         plugin.getAbilityManager().removeAbility(target, type);
-        sender.sendMessage(ChatColor.RED + "Removed " + type.getDisplayName() + ChatColor.RED + " from " + target.getName());
+        sender.sendMessage(ChatColor.RED + "Removed " + type.getDisplayName() + 
+            ChatColor.RED + " from " + target.getName());
     }
     
     private void listAllAbilities(CommandSender sender) {
@@ -113,7 +128,7 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         }
         
         sender.sendMessage("");
-        sender.sendMessage(ChatColor.GRAY + "Total: " + AbilityType.values().length + " Abilities");
+        sender.sendMessage(ChatColor.GRAY + "Total: " + AbilityType.values().length + " Epic Abilities");
         sender.sendMessage(ChatColor.GOLD + "=====================================");
     }
     
@@ -130,7 +145,7 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.GOLD + "=== " + target.getName() + "'s Abilities ===");
         
         if (abilities.isEmpty()) {
-            sender.sendMessage(ChatColor.GRAY + "No abilities awakened");
+            sender.sendMessage(ChatColor.GRAY + "No abilities awakened yet");
         } else {
             for (AbilityType type : abilities) {
                 sender.sendMessage(type.getChatColor() + "✦ " + type.getDisplayName());
@@ -141,21 +156,22 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
     
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("");
-        sender.sendMessage(ChatColor.GOLD + "=== Diablo SMP Ability Commands ===");
+        sender.sendMessage(ChatColor.GOLD + "=== Diablo SMP Commands ===");
         sender.sendMessage(ChatColor.YELLOW + "/ability give <player> <ability> " + ChatColor.GRAY + "- Give an ability");
         sender.sendMessage(ChatColor.YELLOW + "/ability remove <player> <ability> " + ChatColor.GRAY + "- Remove an ability");
         sender.sendMessage(ChatColor.YELLOW + "/ability list [player] " + ChatColor.GRAY + "- List abilities");
-        sender.sendMessage(ChatColor.YELLOW + "/trust <player> " + ChatColor.GRAY + "- Trust player for 5 minutes");
+        sender.sendMessage(ChatColor.YELLOW + "/ability reload " + ChatColor.GRAY + "- Reload plugin");
+        sender.sendMessage(ChatColor.YELLOW + "/trust <player> " + ChatColor.GRAY + "- Trust player for 5 min");
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GRAY + "Example: /ability give Steve SoulReaper");
-        sender.sendMessage(ChatColor.GOLD + "====================================");
+        sender.sendMessage(ChatColor.GRAY + "Powers: SoulReaper, VoidWalker, BloodMage, etc.");
+        sender.sendMessage(ChatColor.GOLD + "================================");
     }
     
     private AbilityType getAbilityByName(String name) {
         for (AbilityType type : AbilityType.values()) {
             if (type.getCommandName().equalsIgnoreCase(name) || 
-                type.name().equalsIgnoreCase(name) ||
-                type.getDisplayName().toLowerCase().contains(name.toLowerCase())) {
+                type.name().equalsIgnoreCase(name)) {
                 return type;
             }
         }
@@ -164,8 +180,9 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
     
     private String getAbilityList() {
         return Arrays.stream(AbilityType.values())
+            .limit(5)
             .map(AbilityType::getCommandName)
-            .collect(Collectors.joining(", "));
+            .collect(Collectors.joining(", ")) + "...";
     }
     
     @Override
@@ -174,16 +191,22 @@ public class AbilityCommand implements CommandExecutor, TabCompleter {
         
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
-            List<String> subs = Arrays.asList("give", "remove", "list");
+            List<String> subs = Arrays.asList("give", "remove", "list", "reload", "help");
             for (String sub : subs) {
-                if (sub.startsWith(partial)) completions.add(sub);
+                if (sub.startsWith(partial)) {
+                    completions.add(sub);
+                }
             }
         }
         else if (args.length == 2) {
             String partial = args[1].toLowerCase();
-            if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("list")) {
+            if (args[0].equalsIgnoreCase("give") || 
+                args[0].equalsIgnoreCase("remove") || 
+                args[0].equalsIgnoreCase("list")) {
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (p.getName().toLowerCase().startsWith(partial)) completions.add(p.getName());
+                    if (p.getName().toLowerCase().startsWith(partial)) {
+                        completions.add(p.getName());
+                    }
                 }
             }
         }
