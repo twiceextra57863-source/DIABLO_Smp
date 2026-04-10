@@ -3,8 +3,10 @@ package com.diablosmp.abilities;
 import com.diablosmp.DiabloSmpPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -26,8 +28,18 @@ public class AbilityManager {
         UUID playerId = player.getUniqueId();
         List<PlayerAbility> abilities = playerAbilities.computeIfAbsent(playerId, k -> new ArrayList<>());
         
+        // Check if player already has this ability absorbed
         for (PlayerAbility ability : abilities) {
-            if (ability.getType() == type) {
+            if (ability.getType() == type && ability.isAbsorbed()) {
+                player.sendMessage(ChatColor.RED + "You already possess this Abyssal Power!");
+                return;
+            }
+        }
+        
+        // Check if player already has the book
+        for (PlayerAbility ability : abilities) {
+            if (ability.getType() == type && !ability.isAbsorbed()) {
+                player.sendMessage(ChatColor.YELLOW + "You already have this Tome of Power!");
                 return;
             }
         }
@@ -35,49 +47,61 @@ public class AbilityManager {
         PlayerAbility newAbility = new PlayerAbility(type);
         abilities.add(newAbility);
         
+        // Create and give the ability book
         ItemStack abilityBook = createAbilityBook(type);
-        if (player.getInventory().firstEmpty() != -1) {
-            player.getInventory().addItem(abilityBook);
-        } else {
+        HashMap<Integer, ItemStack> overflow = player.getInventory().addItem(abilityBook);
+        
+        if (!overflow.isEmpty()) {
             player.getWorld().dropItem(player.getLocation(), abilityBook);
+            player.sendMessage(ChatColor.YELLOW + "Your inventory is full! The Tome has been dropped at your feet.");
         }
         
-        player.sendMessage(ChatColor.GREEN + "You received the " + 
-            type.getChatColor() + type.getDisplayName() + ChatColor.GREEN + " ability!");
-    }
-    
-    public void removeAbility(Player player, AbilityType type) {
-        UUID playerId = player.getUniqueId();
-        List<PlayerAbility> abilities = playerAbilities.get(playerId);
-        
-        if (abilities != null) {
-            abilities.removeIf(ability -> ability.getType() == type);
-        }
-        
-        player.getInventory().remove(Material.ENCHANTED_BOOK);
-        
-        player.sendMessage(ChatColor.RED + "Your " + type.getDisplayName() + 
-            ChatColor.RED + " ability has been removed!");
+        player.sendMessage(type.getChatColor() + "⬡ " + ChatColor.GOLD + "You have received the " + 
+            type.getDisplayName() + ChatColor.GOLD + " ⬡");
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
     }
     
     public ItemStack createAbilityBook(AbilityType type) {
         ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
         ItemMeta meta = book.getItemMeta();
         
-        meta.setDisplayName(type.getChatColor() + "✧ " + type.getDisplayName() + " Ability Book ✧");
+        // Set unique display name
+        meta.setDisplayName(type.getChatColor() + "⬡ " + type.getDisplayName() + " " + type.getChatColor() + "⬡");
         
+        // Create lore
         List<String> lore = new ArrayList<>();
         lore.add("");
-        lore.add(ChatColor.GOLD + "► Right-click to absorb");
-        lore.add(ChatColor.GRAY + "Gain the power of " + type.getDisplayName());
+        lore.add(ChatColor.DARK_GRAY + "◈ " + ChatColor.GOLD + "ᗩᑎᑕIEᑎT TOᗰE Oᖴ ᑭOᗯEᖇ" + ChatColor.DARK_GRAY + " ◈");
         lore.add("");
-        lore.addAll(Arrays.asList(type.getDescription()));
+        lore.add(ChatColor.GRAY + "✧ " + ChatColor.LIGHT_PURPLE + "ᖇIGᕼT-ᑕᒪIᑕK" + ChatColor.GRAY + " to absorb the Abyssal Essence");
+        lore.add(ChatColor.GRAY + "✧ " + ChatColor.LIGHT_PURPLE + "ᗷIᑎᗪᔕ" + ChatColor.GRAY + " to your very soul");
         lore.add("");
-        lore.add(ChatColor.DARK_GRAY + "◆ Cannot be thrown or stored");
-        lore.add(ChatColor.DARK_GRAY + "◆ Use /trust <player> to share");
+        lore.add(ChatColor.DARK_GRAY + "◈ " + ChatColor.DARK_PURPLE + "ᗩᗷYᔕᔕᗩᒪ ᑭOᗯEᖇᔕ" + ChatColor.DARK_GRAY + " ◈");
+        lore.add("");
+        
+        // Add description lines
+        for (String line : type.getDescription()) {
+            lore.add(line);
+        }
+        
+        lore.add("");
+        lore.add(ChatColor.DARK_GRAY + "◈ " + ChatColor.RED + "ᗯᗩᖇᑎIᑎGᔕ" + ChatColor.DARK_GRAY + " ◈");
+        lore.add(ChatColor.DARK_RED + "⚠ " + ChatColor.GRAY + "Cannot be thrown to the void");
+        lore.add(ChatColor.DARK_RED + "⚠ " + ChatColor.GRAY + "Cannot be stored in vessels");
+        lore.add(ChatColor.DARK_RED + "⚠ " + ChatColor.GRAY + "Use " + ChatColor.GREEN + "/soulbind <player>" + 
+            ChatColor.GRAY + " to transfer");
+        lore.add("");
+        lore.add(ChatColor.DARK_GRAY + "◈ " + type.getChatColor() + "TᕼE ᗩᗷYᔕᔕ ᗯᗩTᑕᕼEᔕ" + ChatColor.DARK_GRAY + " ◈");
         
         meta.setLore(lore);
-        meta.setEnchantmentGlintOverride(true);
+        
+        // Add enchantment glint
+        meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        
+        // Custom model data for texture (optional)
+        meta.setCustomModelData(1000 + type.ordinal());
         
         book.setItemMeta(meta);
         return book;
@@ -96,10 +120,21 @@ public class AbilityManager {
             }
         }
         
+        // Remove book from hand
         player.getInventory().setItemInMainHand(null);
         
-        player.sendMessage(type.getChatColor() + "✧ " + type.getDisplayName() + 
-            ChatColor.GREEN + " absorbed into your soul! ✧");
+        // Epic absorption message
+        player.sendMessage("");
+        player.sendMessage(type.getChatColor() + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        player.sendMessage(type.getChatColor() + "  " + type.getDisplayName());
+        player.sendMessage(ChatColor.LIGHT_PURPLE + "  ᕼᗩᔕ ᗷEEᑎ ᗩᗷᔕOᖇᗷEᗪ IᑎTO YOᑌᖇ ᔕOᑌᒪ!");
+        player.sendMessage(type.getChatColor() + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+        player.sendMessage("");
+        
+        // Visual and sound effects
+        plugin.getParticleManager().createAbsorptionEffect(player, type.getParticleColor());
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 0.5f, 1.8f);
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, 1.0f, 1.5f);
     }
     
     public boolean hasAbility(Player player, AbilityType type) {
@@ -116,6 +151,28 @@ public class AbilityManager {
         return false;
     }
     
+    public void removeAbility(Player player, AbilityType type) {
+        UUID playerId = player.getUniqueId();
+        List<PlayerAbility> abilities = playerAbilities.get(playerId);
+        
+        if (abilities != null) {
+            abilities.removeIf(ability -> ability.getType() == type);
+        }
+        
+        // Remove any ability books of this type
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.ENCHANTED_BOOK && item.hasItemMeta()) {
+                String displayName = item.getItemMeta().getDisplayName();
+                if (displayName.contains(type.getSimpleName())) {
+                    player.getInventory().remove(item);
+                }
+            }
+        }
+        
+        player.sendMessage(type.getChatColor() + "⬡ " + ChatColor.RED + "The " + 
+            type.getDisplayName() + ChatColor.RED + " has been cleansed from your soul! ⬡");
+    }
+    
     public void switchStage(Player player) {
         UUID playerId = player.getUniqueId();
         int stage = currentStage.getOrDefault(playerId, 1);
@@ -123,13 +180,19 @@ public class AbilityManager {
         stage = stage == 3 ? 1 : stage + 1;
         currentStage.put(playerId, stage);
         
-        String stageName = stage == 1 ? "Soul Swap" : stage == 2 ? "Gravity Link" : "Soul Storm";
-        player.sendMessage(ChatColor.LIGHT_PURPLE + "Soul Reaper: " + 
-            ChatColor.WHITE + "Stage " + stage + " - " + stageName);
+        String stageName = stage == 1 ? "§dᔕOᑌᒪ ᔕᗯᗩᑭ" : stage == 2 ? "§dGᖇᗩᐯITY ᒪIᑎK" : "§dᔕOᑌᒪ ᔕTOᖇᗰ";
+        player.sendMessage(ChatColor.DARK_PURPLE + "⬡ " + ChatColor.LIGHT_PURPLE + 
+            "ᔕOᑌᒪ ᖇEᗩᑭEᖇ: " + ChatColor.WHITE + "ᔕTᗩGE " + convertToRoman(stage) + " - " + stageName);
+        
+        // Sound feedback
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME, 0.8f, 1.0f + (stage * 0.2f));
     }
     
     public void activateCurrentStage(Player player) {
-        if (!hasAbility(player, AbilityType.SOUL_REAPER)) return;
+        if (!hasAbility(player, AbilityType.SOUL_REAPER)) {
+            player.sendMessage(ChatColor.RED + "You have not awakened any Abyssal Powers!");
+            return;
+        }
         
         int stage = currentStage.getOrDefault(player.getUniqueId(), 1);
         
@@ -138,18 +201,21 @@ public class AbilityManager {
             return;
         }
         
-        // Fixed: Added Entity import and proper target acquisition
         Entity target = player.getTargetEntity(30);
         
         switch (stage) {
             case 1:
                 if (target != null) {
                     soulReaperAbility.activateStage1(player, target);
+                } else {
+                    player.sendMessage(ChatColor.RED + "No target in sight! Gaze upon a living being!");
                 }
                 break;
             case 2:
                 if (target != null) {
                     soulReaperAbility.activateStage2(player, target);
+                } else {
+                    player.sendMessage(ChatColor.RED + "No target to bind! Look at a living entity!");
                 }
                 break;
             case 3:
@@ -157,6 +223,26 @@ public class AbilityManager {
                 soulReaperAbility.clearSoulStormReady(player);
                 break;
         }
+    }
+    
+    public List<AbilityType> getPlayerAbilities(Player player) {
+        UUID playerId = player.getUniqueId();
+        List<PlayerAbility> abilities = playerAbilities.get(playerId);
+        List<AbilityType> types = new ArrayList<>();
+        
+        if (abilities != null) {
+            for (PlayerAbility ability : abilities) {
+                if (ability.isAbsorbed()) {
+                    types.add(ability.getType());
+                }
+            }
+        }
+        return types;
+    }
+    
+    private String convertToRoman(int num) {
+        String[] romans = {"I", "II", "III"};
+        return romans[num - 1];
     }
     
     public void saveAllData() {
