@@ -53,8 +53,8 @@ public class ParticleManager {
             world.spawnParticle(Particle.END_ROD, crownPoint, 1, 0, 0, 0, 0.01);
         }
         
-        // Add glowing effect
-        world.spawnParticle(Particle.ENCHANTMENT_TABLE, location, 15, 0.5, 0.5, 0.5, 0.1);
+        // Fixed: Use correct Particle name
+        world.spawnParticle(Particle.ENCHANT, location, 15, 0.5, 0.5, 0.5, 0.1);
     }
     
     public void createAbsorptionEffect(Player player, Color color) {
@@ -62,7 +62,6 @@ public class ParticleManager {
         World world = location.getWorld();
         if (world == null) return;
         
-        // Dragon particles spiraling up
         new org.bukkit.scheduler.BukkitRunnable() {
             double y = 0;
             int ticks = 0;
@@ -101,47 +100,10 @@ public class ParticleManager {
         World world = location.getWorld();
         if (world == null) return;
         
-        // Large smoke effect
         world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, location, 30, 0.5, 0.5, 0.5, 0.05);
-        world.spawnParticle(Particle.LARGE_SMOKE, location, 20, 0.5, 0.5, 0.5, 0.05);
         world.spawnParticle(Particle.SMOKE, location, 50, 0.8, 0.8, 0.8, 0.02);
         
-        // Sound effect
         world.playSound(location, org.bukkit.Sound.ENTITY_GENERIC_EXTINGUISH_FIRE, 1.0f, 0.5f);
         world.playSound(location, org.bukkit.Sound.BLOCK_FIRE_EXTINGUISH, 0.8f, 1.0f);
-    }
-    
-    public void createSoulExchangeEffect(Location loc1, Location loc2) {
-        World world = loc1.getWorld();
-        if (world == null) return;
-        
-        // Create soul exchange animation
-        new org.bukkit.scheduler.BukkitRunnable() {
-            int ticks = 0;
-            
-            @Override
-            public void run() {
-                ticks++;
-                if (ticks > 20) {
-                    this.cancel();
-                    return;
-                }
-                
-                // Particles moving between locations
-                for (double t = 0; t <= 1; t += 0.1) {
-                    Location point = lerpLocation(loc1, loc2, t);
-                    world.spawnParticle(Particle.SOUL, point, 2, 0.2, 0.2, 0.2, 0.02);
-                    world.spawnParticle(Particle.SOUL_FIRE_FLAME, point, 1, 0.1, 0.1, 0.1, 0.01);
-                }
-                
-                // Energy burst at both ends
-                world.spawnParticle(Particle.PORTAL, loc1, 5, 0.3, 0.3, 0.3, 0.1);
-                world.spawnParticle(Particle.PORTAL, loc2, 5, 0.3, 0.3, 0.3, 0.1);
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
-    }
-    
-    private Location lerpLocation(Location a, Location b, double t) {
-        return a.clone().add(b.clone().subtract(a).multiply(t));
     }
 }
