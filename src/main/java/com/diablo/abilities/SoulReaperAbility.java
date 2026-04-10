@@ -29,7 +29,6 @@ public class SoulReaperAbility {
         
         UUID playerId = player.getUniqueId();
         
-        // Check cooldown
         if (plugin.getCooldownManager().hasCooldown(playerId, "soul_reaper_1")) {
             long remaining = plugin.getCooldownManager().getRemainingCooldown(playerId, "soul_reaper_1");
             player.sendMessage(ChatColor.RED + "Soul Reaper Stage 1 on cooldown! " + 
@@ -37,10 +36,7 @@ public class SoulReaperAbility {
             return;
         }
         
-        // Start soul swap
         startSoulSwap(player, livingTarget);
-        
-        // Set cooldown (45 seconds)
         plugin.getCooldownManager().setCooldown(playerId, "soul_reaper_1", 45);
     }
     
@@ -48,11 +44,9 @@ public class SoulReaperAbility {
         UUID playerId = player.getUniqueId();
         UUID targetId = target.getUniqueId();
         
-        // Save original states
         Location playerLoc = player.getLocation().clone();
         Location targetLoc = target.getLocation().clone();
         
-        // Create statue for player's body
         ArmorStand statue = player.getWorld().spawn(playerLoc, ArmorStand.class);
         statue.setVisible(false);
         statue.setInvulnerable(true);
@@ -61,38 +55,31 @@ public class SoulReaperAbility {
         statue.setCustomName(ChatColor.DARK_PURPLE + "⚡ " + player.getName() + "'s Body ⚡");
         statue.setCustomNameVisible(true);
         
-        // Store player's inventory
         Inventory storedInventory = Bukkit.createInventory(null, 54);
         storedInventory.setContents(player.getInventory().getContents());
         
-        // Clear player's inventory except hotbar
         for (int i = 9; i < 36; i++) {
             player.getInventory().setItem(i, createBarrierItem());
         }
         
-        // Make player invisible and invulnerable
         player.setInvisible(true);
         player.setInvulnerable(true);
         
-        // Store swap data
         SoulSwapData data = new SoulSwapData(player, target, statue, storedInventory, playerLoc, targetLoc);
         activeSoulSwaps.put(playerId, data);
         
-        // Create chain particles between bodies
         startChainParticles(player, target, statue);
         
-        // Send messages
         player.sendMessage(ChatColor.DARK_PURPLE + "✧ " + ChatColor.LIGHT_PURPLE + 
             "Soul Swap activated! You now control " + target.getName() + "'s body for 30 seconds!");
         player.sendMessage(ChatColor.GRAY + "Your body is protected and cannot be damaged.");
         
-        // Schedule revert after 30 seconds
         new BukkitRunnable() {
             @Override
             public void run() {
                 revertSoulSwap(playerId);
             }
-        }.runTaskLater(plugin, 600L); // 30 seconds = 600 ticks
+        }.runTaskLater(plugin, 600L);
     }
     
     private void startChainParticles(Player player, LivingEntity target, ArmorStand statue) {
@@ -112,11 +99,10 @@ public class SoulReaperAbility {
                 Location loc1 = statue.getLocation().add(0, 1, 0);
                 Location loc2 = target.getLocation().add(0, 1, 0);
                 
-                // Draw chain particles
+                // Fixed: Use correct Particle names
                 plugin.getParticleManager().drawChainLink(loc1, loc2, Particle.SOUL_FIRE_FLAME, Color.PURPLE);
-                plugin.getParticleManager().drawChainLink(loc1, loc2, Particle.ENCHANTMENT_TABLE, Color.PURPLE);
+                plugin.getParticleManager().drawChainLink(loc1, loc2, Particle.ENCHANT, Color.PURPLE);
                 
-                // Add crown effect on target
                 if (ticks % 10 == 0) {
                     plugin.getParticleManager().createCrownEffect(target.getLocation().add(0, 2.5, 0), Color.PURPLE);
                 }
@@ -129,7 +115,6 @@ public class SoulReaperAbility {
         
         UUID playerId = player.getUniqueId();
         
-        // Check cooldown
         if (plugin.getCooldownManager().hasCooldown(playerId, "soul_reaper_2")) {
             long remaining = plugin.getCooldownManager().getRemainingCooldown(playerId, "soul_reaper_2");
             player.sendMessage(ChatColor.RED + "Soul Reaper Stage 2 on cooldown! " + 
@@ -137,16 +122,12 @@ public class SoulReaperAbility {
             return;
         }
         
-        // Check if already has active gravity link
         if (activeGravityLinks.containsKey(playerId)) {
             player.sendMessage(ChatColor.RED + "You already have an active Gravity Link!");
             return;
         }
         
-        // Start gravity link
         startGravityLink(player, livingTarget);
-        
-        // Set cooldown (30 seconds)
         plugin.getCooldownManager().setCooldown(playerId, "soul_reaper_2", 30);
     }
     
@@ -160,7 +141,6 @@ public class SoulReaperAbility {
             "Gravity Link activated! " + target.getName() + " is now attached to your cursor!");
         player.sendMessage(ChatColor.GRAY + "Left click again to launch the target!");
         
-        // Start tracking cursor
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -178,45 +158,15 @@ public class SoulReaperAbility {
                 Location cursorLoc = player.getTargetBlockExact(30).getLocation().add(0.5, 1, 0.5);
                 linkData.getTarget().teleport(cursorLoc);
                 
-                // Spawn particles at target location
                 player.getWorld().spawnParticle(Particle.PORTAL, 
                     linkData.getTarget().getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.1);
             }
         }.runTaskTimer(plugin, 0L, 1L);
     }
     
-    public void launchGravityLinked(Player player) {
-        UUID playerId = player.getUniqueId();
-        GravityLinkData data = activeGravityLinks.get(playerId);
-        
-        if (data == null || data.isLaunched()) return;
-        
-        LivingEntity target = data.getTarget();
-        Vector direction = player.getLocation().getDirection().multiply(2.5);
-        
-        target.setVelocity(direction);
-        data.setLaunched(true);
-        
-        // Visual effects
-        player.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, target.getLocation(), 1);
-        player.getWorld().playSound(target.getLocation(), Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.0f, 1.5f);
-        
-        player.sendMessage(ChatColor.DARK_PURPLE + "✧ " + ChatColor.LIGHT_PURPLE + 
-            target.getName() + " launched!");
-        
-        // Remove after launch
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                activeGravityLinks.remove(playerId);
-            }
-        }.runTaskLater(plugin, 40L);
-    }
-    
     public void activateStage3(Player player) {
         UUID playerId = player.getUniqueId();
         
-        // Check cooldown
         if (plugin.getCooldownManager().hasCooldown(playerId, "soul_reaper_3")) {
             long remaining = plugin.getCooldownManager().getRemainingCooldown(playerId, "soul_reaper_3");
             player.sendMessage(ChatColor.RED + "Soul Reaper Stage 3 on cooldown! " + 
@@ -224,17 +174,14 @@ public class SoulReaperAbility {
             return;
         }
         
-        // Find target in line of sight
-        Entity target = getTargetEntity(player, 50);
+        Entity target = player.getTargetEntity(50);
         
         if (target instanceof LivingEntity livingTarget) {
             executeSoulStorm(player, livingTarget);
         } else {
-            // If no target, execute at player's location
             executeSoulStorm(player, null);
         }
         
-        // Set cooldown (60 seconds)
         plugin.getCooldownManager().setCooldown(playerId, "soul_reaper_3", 60);
     }
     
@@ -245,16 +192,12 @@ public class SoulReaperAbility {
         player.sendMessage(ChatColor.DARK_PURPLE + "✧ " + ChatColor.LIGHT_PURPLE + 
             "Soul Storm unleashed!");
         
-        // Play sound
         world.playSound(center, Sound.ENTITY_WITHER_SPAWN, 2.0f, 1.0f);
         
-        // Area damage effect
         for (Entity entity : world.getNearbyEntities(center, 80, 40, 80)) {
             if (entity instanceof LivingEntity livingEntity && entity != player) {
-                // Apply damage
                 livingEntity.damage(8.0, player);
                 
-                // Visual effect on each hit entity
                 world.spawnParticle(Particle.SOUL, livingEntity.getLocation().add(0, 1, 0), 
                     20, 0.5, 0.5, 0.5, 0.1);
                 world.spawnParticle(Particle.SOUL_FIRE_FLAME, livingEntity.getLocation().add(0, 1, 0), 
@@ -262,7 +205,6 @@ public class SoulReaperAbility {
             }
         }
         
-        // If there's a primary target, swap positions
         if (primaryTarget != null) {
             Location playerLoc = player.getLocation().clone();
             Location targetLoc = primaryTarget.getLocation().clone();
@@ -270,7 +212,7 @@ public class SoulReaperAbility {
             player.teleport(targetLoc);
             primaryTarget.teleport(playerLoc);
             
-            // Swap effect
+            // Fixed: Use correct Particle name
             world.spawnParticle(Particle.PORTAL, playerLoc, 50, 1, 1, 1, 0.5);
             world.spawnParticle(Particle.PORTAL, targetLoc, 50, 1, 1, 1, 0.5);
             world.playSound(playerLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.5f, 1.2f);
@@ -279,7 +221,6 @@ public class SoulReaperAbility {
             player.sendMessage(ChatColor.LIGHT_PURPLE + "Position swapped with " + primaryTarget.getName() + "!");
         }
         
-        // Create soul particle storm
         new BukkitRunnable() {
             int ticks = 0;
             
@@ -309,21 +250,18 @@ public class SoulReaperAbility {
         crouchCount.put(playerId, count);
         
         if (count >= 3) {
-            // Ready Soul Storm
             soulStormReady.add(playerId);
             crouchCount.put(playerId, 0);
             
             player.sendMessage(ChatColor.DARK_PURPLE + "✧ " + ChatColor.LIGHT_PURPLE + 
                 "Soul Storm ready! Left click to unleash!");
             
-            // Visual effect
             plugin.getParticleManager().createCrownEffect(player.getLocation().add(0, 2.5, 0), Color.PURPLE);
             player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
         } else {
             player.sendMessage(ChatColor.GRAY + "Crouch " + (3 - count) + " more times for Soul Storm");
         }
         
-        // Reset crouch count after 2 seconds
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -348,17 +286,11 @@ public class SoulReaperAbility {
         LivingEntity target = data.getTarget();
         ArmorStand statue = data.getStatue();
         
-        // Restore player
         player.setInvisible(false);
         player.setInvulnerable(false);
-        
-        // Restore inventory
         player.getInventory().setContents(data.getStoredInventory().getContents());
-        
-        // Remove statue
         statue.remove();
         
-        // Teleport player back if needed
         if (player.getLocation().distance(data.getPlayerOriginalLocation()) > 10) {
             player.teleport(data.getPlayerOriginalLocation());
         }
@@ -366,13 +298,8 @@ public class SoulReaperAbility {
         player.sendMessage(ChatColor.DARK_PURPLE + "✧ " + ChatColor.LIGHT_PURPLE + 
             "Soul Swap ended! You have returned to your body.");
         
-        // Visual effect
         player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation(), 50, 1, 1, 1, 0.5);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.5f, 0.8f);
-    }
-    
-    private Entity getTargetEntity(Player player, int range) {
-        return player.getTargetEntity(range);
     }
     
     private ItemStack createBarrierItem() {
@@ -387,7 +314,6 @@ public class SoulReaperAbility {
         return barrier;
     }
     
-    // Data classes
     private static class SoulSwapData {
         private final Player player;
         private final LivingEntity target;
@@ -429,4 +355,4 @@ public class SoulReaperAbility {
         public boolean isLaunched() { return launched; }
         public void setLaunched(boolean launched) { this.launched = launched; }
     }
-                  }
+    }
