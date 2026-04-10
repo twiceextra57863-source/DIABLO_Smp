@@ -1,10 +1,35 @@
-name: DiabloSMP
-version: 1.0
-main: com.diablo.smp.DiabloSMP
-api-version: 1.21
+name: DiabloSmpPlugin
+version: 1.0.0
+main: com.diablosmp.DiabloSmpPlugin
+api-version: '1.21'
+description: Ultimate abilities plugin for Diablo SMP
+author: YourName
+
 commands:
   diablo:
-    description: Main Admin Command
-    permission: diablo.admin
+    description: Main command for Diablo SMP Plugin
+    usage: /diablo <give|reload|list|info>
+    aliases: [ds, dsmp]
+  ability:
+    description: Manage player abilities
+    usage: /ability <give|remove|list|switch> <player> <ability>
+    aliases: [ab]
   trust:
-    description: Trust a player for trading
+    description: Trust another player to receive your ability book
+    usage: /trust <player>
+  abilities:
+    description: List all available abilities
+    usage: /abilities
+    
+permissions:
+  diablosmp.*:
+    description: All Diablo SMP permissions
+    children:
+      diablosmp.admin: true
+      diablosmp.use: true
+  diablosmp.admin:
+    description: Admin commands access
+    default: op
+  diablosmp.use:
+    description: Use abilities
+    default: true
