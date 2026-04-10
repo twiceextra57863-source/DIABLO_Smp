@@ -2,28 +2,27 @@ name: ${project.artifactId}
 version: ${project.version}
 main: com.diablosmp.DiabloSmpPlugin
 api-version: '1.21'
-description: ᗩᗷYᔕᔕᗩᒪ ᑭOᗯEᖇᔕ ᖴOᖇ ᗪIᗩᗷᒪO ᔕᗰᑭ
-author: Minetwice
+description: Diablo SMP Plugin with Epic Abilities
+author: DarkLord
 
 commands:
-  abyssal:
-    description: §5⬡ §dᑕOᗰᗰᗩᑎᗪ TᕼE ᗩᗷYᔕᔕᗩᒪ ᑭOᗯEᖇᔕ §5⬡
-    usage: /abyssal <bestow|cleanse|compendium|awakening>
-    aliases: [abyss, aby]
-  soulbind:
-    description: §5⬡ §dᗷIᑎᗪ YOᑌᖇ ᔕOᑌᒪ TO ᗩᑎOTᕼEᖇ §5⬡
-    usage: /soulbind <player>
-    aliases: [bind, sb]
+  diablo:
+    description: Main Diablo SMP command
+    usage: /diablo <give|remove|list|reload>
+    aliases: [ds, dsmp]
+  ability:
+    description: Manage player abilities
+    usage: /ability <give|remove|list> <player> <ability>
+    aliases: [ab]
+  trust:
+    description: Trust another player to share abilities
+    usage: /trust <player>
+    aliases: [tr]
     
 permissions:
-  abyssal.*:
-    description: ᗩᒪᒪ ᗩᗷYᔕᔕᗩᒪ ᑭEᖇᗰIᔕᔕIOᑎᔕ
-    children:
-      abyssal.archon: true
-      abyssal.awakened: true
-  abyssal.archon:
-    description: ᗩᖇᑕᕼOᑎ ᑕOᗰᗰᗩᑎᗪᔕ
+  diablosmp.admin:
+    description: Admin commands access
     default: op
-  abyssal.awakened:
-    description: ᑌᔕE ᗩᗷYᔕᔕᗩᒪ ᑭOᗯEᖇᔕ
+  diablosmp.use:
+    description: Use abilities
     default: true
