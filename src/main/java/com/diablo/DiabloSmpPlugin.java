@@ -37,27 +37,24 @@ public class DiabloSmpPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BookListener(this), this);
         getServer().getPluginManager().registerEvents(new TrustListener(this), this);
         
-        // Register commands
-        getCommand("diablo").setExecutor(new AbilityCommand(this));
-        getCommand("ability").setExecutor(new AbilityCommand(this));
-        getCommand("trust").setExecutor(new TrustCommand(this));
+        // Register commands with UNIQUE names
+        getCommand("abyssal").setExecutor(new AbilityCommand(this));
+        getCommand("soulbind").setExecutor(new TrustCommand(this));
         
         // Register tab completers
-        getCommand("diablo").setTabCompleter(new AbilityCommand(this));
-        getCommand("ability").setTabCompleter(new AbilityCommand(this));
-        getCommand("trust").setTabCompleter(new TrustCommand(this));
+        getCommand("abyssal").setTabCompleter(new AbilityCommand(this));
+        getCommand("soulbind").setTabCompleter(new TrustCommand(this));
         
-        getLogger().info("§6⚡ §eDiablo SMP Plugin §aactivated successfully!");
-        getLogger().info("§6⚡ §eReady to unleash epic abilities!");
+        getLogger().info("§5⬡ §dᗪIᗩᗷᒪO ᔕᗰᑭ §5⬡ §7» §aEᑎᕼᗩᑎᑕEᗪ ᗯITᕼ ᗪᗩᖇK EᔕᔕEᑎᑕE!");
+        getLogger().info("§5⬡ §dᑌᑎᒪEᗩᔕᕼ TᕼE ᑭOᗯEᖇ Oᖴ TᕼE ᗩᗷYᔕᔕ §5⬡");
     }
     
     @Override
     public void onDisable() {
-        // Save all data
         if (abilityManager != null) {
             abilityManager.saveAllData();
         }
-        getLogger().info("§cDiablo SMP Plugin disabled!");
+        getLogger().info("§5⬡ §cTᕼE ᗩᗷYᔕᔕ ᑕᒪᗩIᗰᔕ ᗩᑎOTᕼEᖇ ᔕOᑌᒪ... §5⬡");
     }
     
     public static DiabloSmpPlugin getInstance() {
