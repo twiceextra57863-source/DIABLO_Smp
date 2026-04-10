@@ -1,9 +1,10 @@
-name: ${project.artifactId}
-version: ${project.version}
+name: DiabloSmpPlugin
+version: 1.0.0
 main: com.diablosmp.DiabloSmpPlugin
 api-version: '1.21'
 description: Diablo SMP Plugin with Epic Abilities
 author: DarkLord
+website: https://github.com/yourname/DiabloSmpPlugin
 
 commands:
   diablo:
@@ -21,8 +22,8 @@ commands:
     
 permissions:
   diablosmp.admin:
-    description: Admin commands access
+    description: Admin commands access for Diablo SMP
     default: op
   diablosmp.use:
-    description: Use abilities
+    description: Use Diablo SMP abilities
     default: true
