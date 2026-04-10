@@ -24,28 +24,43 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command!");
+            sender.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "Only living souls can perform the Soul Binding! ⬡");
             return true;
         }
         
         if (args.length < 1) {
-            player.sendMessage(ChatColor.RED + "Usage: /trust <player>");
-            player.sendMessage(ChatColor.GRAY + "Trust another player to receive ability books for 5 minutes");
+            player.sendMessage("");
+            player.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+            player.sendMessage(ChatColor.LIGHT_PURPLE + "   ᔕOᑌᒪ ᗷIᑎᗪIᑎG ᖇITᑌᗩᒪ");
+            player.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
+            player.sendMessage("");
+            player.sendMessage(ChatColor.GOLD + "/soulbind <player> " + ChatColor.GRAY + "- Bind your soul to another");
+            player.sendMessage(ChatColor.GRAY + "Allows sharing of Abyssal Tomes for 5 minutes");
+            player.sendMessage(ChatColor.DARK_RED + "⚠ " + ChatColor.GRAY + "Beware: If you fall in combat during the binding...");
+            player.sendMessage(ChatColor.DARK_RED + "   " + ChatColor.GRAY + "Your Tome may fall into enemy hands!");
+            player.sendMessage("");
+            player.sendMessage(ChatColor.DARK_PURPLE + "⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡⬡");
             return true;
         }
         
         Player target = Bukkit.getPlayer(args[0]);
         if (target == null) {
-            player.sendMessage(ChatColor.RED + "Player not found!");
+            player.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "That soul does not exist in this realm! ⬡");
             return true;
         }
         
         if (target.equals(player)) {
-            player.sendMessage(ChatColor.RED + "You cannot trust yourself!");
+            player.sendMessage(ChatColor.DARK_RED + "⬡ " + ChatColor.RED + "You cannot bind your soul to yourself! ⬡");
             return true;
         }
         
         plugin.getTrustManager().createTrust(player, target);
+        
+        // Visual effect for soul binding
+        player.getWorld().spawnParticle(org.bukkit.Particle.SOUL_FIRE_FLAME, 
+            player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
+        player.getWorld().spawnParticle(org.bukkit.Particle.SOUL_FIRE_FLAME, 
+            target.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.05);
         
         return true;
     }
