@@ -23,7 +23,9 @@ public class BookListener implements Listener {
     private final DiabloSmpPlugin plugin;
     private final Map<UUID, Long> lastDropWarning = new HashMap<>();
 
-    public BookListener(DiabloSmpPlugin plugin) { this.plugin = plugin; }
+    public BookListener(DiabloSmpPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     @EventHandler
     public void onRightClickBook(PlayerInteractEvent event) {
@@ -51,8 +53,8 @@ public class BookListener implements Listener {
         long now = System.currentTimeMillis();
         if (!lastDropWarning.containsKey(uid) || (now - lastDropWarning.get(uid)) > 60000) {
             lastDropWarning.put(uid, now);
-            // Use SMOKE_LARGE particle (exists in Paper 1.21)
-            p.getWorld().spawnParticle(Particle.SMOKE_LARGE, p.getLocation(), 30, 0.5, 1, 0.5);
+            // Use SMOKE instead of SMOKE_LARGE (compatible with 1.21)
+            p.getWorld().spawnParticle(Particle.SMOKE, p.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
             p.playSound(p.getLocation(), Sound.ENTITY_GHAST_SHOOT, 1.0f, 1.2f);
             p.sendMessage(plugin.getConfigUtils().getMessage("drop-warning"));
             event.setCancelled(true);
