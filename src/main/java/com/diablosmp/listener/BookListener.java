@@ -3,6 +3,9 @@ package com.diablosmp.listener;
 import com.diablosmp.DiabloSmpPlugin;
 import com.diablosmp.gui.AbsorptionGUI;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,10 +13,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.Sound;
-import org.bukkit.Particle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,12 +51,13 @@ public class BookListener implements Listener {
         long now = System.currentTimeMillis();
         if (!lastDropWarning.containsKey(uid) || (now - lastDropWarning.get(uid)) > 60000) {
             lastDropWarning.put(uid, now);
+            // Use SMOKE_LARGE particle (exists in Paper 1.21)
             p.getWorld().spawnParticle(Particle.SMOKE_LARGE, p.getLocation(), 30, 0.5, 1, 0.5);
             p.playSound(p.getLocation(), Sound.ENTITY_GHAST_SHOOT, 1.0f, 1.2f);
-            p.sendMessage("§c§l⚠ You cannot drop this ancient book! It will vanish if you try again.");
+            p.sendMessage(plugin.getConfigUtils().getMessage("drop-warning"));
             event.setCancelled(true);
         } else {
-            p.sendMessage("§cThe book is bound to you – it cannot be thrown away.");
+            p.sendMessage(plugin.getConfigUtils().getMessage("drop-blocked"));
             event.setCancelled(true);
         }
     }
