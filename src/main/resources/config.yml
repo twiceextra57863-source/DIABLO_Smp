@@ -1,34 +1,52 @@
-# Diablo SMP Plugin Configuration
-# Configure all aspects of the plugin here
+# DiabloSmpPlugin Configuration
+# ==============================
 
-settings:
-  prefix: "&5✧ &dDiablo SMP &5✧ &7»"
-  language: "en"
-  debug: false
+# General plugin settings
+plugin:
+  # Should ability usage messages be sent to the player?
+  send-usage-messages: true
+  # Default cooldown in seconds for abilities that don't specify their own
+  default-cooldown: 30
 
-abilities:
-  soul_reaper:
-    cooldown:
-      stage1: 45
-      stage2: 30
-      stage3: 60
-    damage:
-      stage3: 8.0
-    duration:
-      stage1: 30
-    radius:
-      stage3: 80
+# Ability-specific overrides (stage cooldowns)
+# Format: <ability-name>.<stage> = seconds
+cooldowns:
+  soulweaver:
+    stage1: 45
+    stage2: 30
+    stage3: 20
 
-trust:
-  duration: 300
-  warning_time: 60
-
-particles:
-  density: 1.0
-  visibility_range: 50
-
+# Messages (supports colour codes with &)
 messages:
-  no_permission: "&cYou don't have permission to do this!"
-  ability_cooldown: "&cAbility on cooldown! &e{time}s remaining"
-  ability_activated: "&aAbility activated!"
-  trust_expired: "&cYour trust has expired!"
+  no-permission: "&cYou don't have permission to use this command."
+  ability-cooldown: "&c%ability% stage %stage% is on cooldown for %seconds% more seconds."
+  ability-used: "&aYou used %ability% stage %stage%!"
+  stage-switched: "&e%ability% stage changed to %stage%."
+  book-absorbed: "&aYou absorbed the power of %ability%!"
+  book-absorb-error: "&cYou must place the exact ability book in the slot."
+  trust-success: "&aYou have trusted %player% for 5 minutes. If they kill you, your ability book will drop."
+  trust-received: "&e%player% has trusted you for 5 minutes. Killing them will make their ability book drop."
+  trust-expired: "&cYour trust with %player% has expired."
+  soul-exchange-start: "&5You have possessed %target% for 30 seconds!"
+  soul-exchange-end: "&5Soul exchange ended."
+  soul-exchange-body-lost: "&cYour body has been taken over!"
+  drop-warning: "&c&l⚠ You cannot drop this ancient book! It will vanish if you try again."
+  drop-blocked: "&cThe book is bound to you – it cannot be thrown away."
+  invalid-ability-book: "&cInvalid ability book!"
+
+# Particle and visual effects
+effects:
+  # Name of particle used for the line during soul exchange
+  soul-line-particle: "SOUL_FIRE_FLAME"
+  # Crown particle colour (hex, without #)
+  crown-colour:
+    stage1: "AA00FF"   # purple
+    stage2: "00AAFF"   # blue
+    stage3: "FF5500"   # orange
+  # Dragon absorption flag
+  dragon-absorption: true
+
+# Trust system
+trust:
+  duration-seconds: 300   # 5 minutes
+  drop-on-kill: true
