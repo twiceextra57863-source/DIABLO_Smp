@@ -1,29 +1,26 @@
 name: DiabloSmpPlugin
 version: 1.0.0
 main: com.diablosmp.DiabloSmpPlugin
-api-version: '1.21'
-description: Diablo SMP Plugin with Epic Abilities
-author: DarkLord
-website: https://github.com/yourname/DiabloSmpPlugin
-
+api-version: 1.21
+author: YourName
+description: Epic abilities plugin with 3-stage powers, soul exchange, and boss pack.
 commands:
   diablo:
-    description: Main Diablo SMP command
-    usage: /diablo <give|remove|list|reload>
-    aliases: [ds, dsmp]
-  ability:
-    description: Manage player abilities
-    usage: /ability <give|remove|list> <player> <ability>
-    aliases: [ab]
+    description: Admin commands for Diablo abilities
+    usage: /diablo give <player> <ability> [stage]
+    permission: diablo.admin
   trust:
-    description: Trust another player to share abilities
+    description: Trust a player to receive your ability book on death
     usage: /trust <player>
-    aliases: [tr]
-    
+    permission: diablo.trust
 permissions:
-  diablosmp.admin:
-    description: Admin commands access for Diablo SMP
+  diablo.admin:
     default: op
-  diablosmp.use:
-    description: Use Diablo SMP abilities
+  diablo.trust:
     default: true
+  diablo.ability.*:
+    default: false
+    children:
+      diablo.ability.soulweaver: true
+  diablo.ability.soulweaver:
+    default: false
