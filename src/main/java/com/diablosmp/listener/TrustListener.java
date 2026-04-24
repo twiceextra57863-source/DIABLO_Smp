@@ -15,11 +15,10 @@ import java.util.UUID;
 
 public class TrustListener implements Listener {
     private final DiabloSmpPlugin plugin;
-    // trustMap: holder -> (trusted -> expiry)
     private final Map<UUID, Map<UUID, Long>> trustMap = new HashMap<>();
 
-    public TrustListener(DiabloSmpPlugin plugin) { 
-        this.plugin = plugin; 
+    public TrustListener(DiabloSmpPlugin plugin) {
+        this.plugin = plugin;
     }
 
     public void addTrust(Player holder, Player trusted, int durationSeconds) {
@@ -36,7 +35,6 @@ public class TrustListener implements Listener {
         if (trustedMap == null) return;
         Long expiry = trustedMap.get(killer.getUniqueId());
         if (expiry != null && expiry > System.currentTimeMillis()) {
-            // Drop the ability book (if victim has any in inventory)
             for (ItemStack item : victim.getInventory().getContents()) {
                 if (item != null && item.getType().toString().contains("ENCHANTED_BOOK") &&
                         item.getItemMeta() != null &&
@@ -44,12 +42,13 @@ public class TrustListener implements Listener {
                                 new NamespacedKey(plugin, "ability"), PersistentDataType.STRING)) {
                     victim.getWorld().dropItem(victim.getLocation(), item);
                     victim.getInventory().remove(item);
-                    event.getDrops().remove(item); // ensure drops only once
+                    event.getDrops().remove(item);
                     break;
                 }
             }
             trustedMap.remove(killer.getUniqueId());
-            victim.sendMessage(plugin.getConfigUtils().getMessage("trust-expired").replace("%player%", killer.getName()));
+            victim.sendMessage(plugin.getConfigUtils().getMessage("trust-expired")
+                    .replace("%player%", killer.getName()));
         }
     }
 }
