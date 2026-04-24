@@ -1,11 +1,13 @@
 package com.diablosmp.listener;
 
 import com.diablosmp.DiabloSmpPlugin;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +18,9 @@ public class TrustListener implements Listener {
     // trustMap: holder -> (trusted -> expiry)
     private final Map<UUID, Map<UUID, Long>> trustMap = new HashMap<>();
 
-    public TrustListener(DiabloSmpPlugin plugin) { this.plugin = plugin; }
+    public TrustListener(DiabloSmpPlugin plugin) { 
+        this.plugin = plugin; 
+    }
 
     public void addTrust(Player holder, Player trusted, int durationSeconds) {
         Map<UUID, Long> trustedMap = trustMap.computeIfAbsent(holder.getUniqueId(), k -> new HashMap<>());
@@ -45,7 +49,7 @@ public class TrustListener implements Listener {
                 }
             }
             trustedMap.remove(killer.getUniqueId());
-            victim.sendMessage("§cYour ability book dropped because " + killer.getName() + " killed you during trust!");
+            victim.sendMessage(plugin.getConfigUtils().getMessage("trust-expired").replace("%player%", killer.getName()));
         }
     }
-                      }
+}
