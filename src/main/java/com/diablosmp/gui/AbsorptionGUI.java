@@ -20,28 +20,27 @@ import java.util.Arrays;
 public class AbsorptionGUI implements Listener {
     private final DiabloSmpPlugin plugin;
     private final Player player;
-    private final ItemStack book;
+    private final ItemStack originalBook;
     private Inventory gui;
     private boolean absorbed = false;
     private String abilityName;
     private int stage;
+    private boolean isConfirmGui = false;  // track which GUI is open
 
-    // GUI titles
     private static final String PLACE_TITLE = "§0§lPlace Ability Book";
     private static final String CONFIRM_TITLE = "§0§lConfirm Absorption";
 
     public AbsorptionGUI(DiabloSmpPlugin plugin, Player player, ItemStack book) {
         this.plugin = plugin;
         this.player = player;
-        this.book = book.clone(); // clone to avoid modifications
-        // Extract ability info from book PDC
+        this.originalBook = book.clone();
         var pdc = book.getItemMeta().getPersistentDataContainer();
         this.abilityName = pdc.get(new NamespacedKey(plugin, "ability"), PersistentDataType.STRING);
         this.stage = pdc.getOrDefault(new NamespacedKey(plugin, "stage"), PersistentDataType.INTEGER, 1);
     }
 
     public void open() {
-        // First GUI: enchanting table in center
+        isConfirmGui = false;
         gui = Bukkit.createInventory(null, 9, PLACE_TITLE);
         ItemStack table = new ItemStack(Material.ENCHANTING_TABLE);
         ItemMeta meta = table.getItemMeta();
@@ -56,54 +55,46 @@ public class AbsorptionGUI implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (!event.getInventory().equals(gui)) return;
-        event.setCancelled(true); // prevent any item movement
+        event.setCancelled(true);
 
         if (!(event.getWhoClicked() instanceof Player p)) return;
         if (!p.equals(player)) return;
 
         int slot = event.getRawSlot();
 
-        // Stage 1: Place GUI
-        if (gui.getTitle().equals(PLACE_TITLE)) {
+        if (!isConfirmGui) {
+            // First GUI: place book on enchanting table
             if (slot == 4) {
-                // Player clicked the enchanting table slot – check if holding the correct book
                 ItemStack cursor = event.getCursor();
-                if (cursor != null && cursor.isSimilar(book)) {
-                    // Place the book into the slot
+                if (cursor != null && cursor.isSimilar(originalBook)) {
                     event.setCursor(null);
-                    gui.setItem(4, book.clone());
+                    gui.setItem(4, originalBook.clone());
                     p.updateInventory();
-                    // Now switch to second GUI (confirm)
                     openConfirmGUI();
                 } else {
                     p.sendMessage(plugin.getConfigUtils().getMessage("book-absorb-error"));
                 }
             }
-        }
-        // Stage 2: Confirm GUI
-        else if (gui.getTitle().equals(CONFIRM_TITLE)) {
-            // Withdraw slot (slot 0)
+        } else {
+            // Second GUI: confirmation
             if (slot == 0) {
-                // Give back the book and close
-                p.getInventory().addItem(book.clone());
+                // Withdraw
+                p.getInventory().addItem(originalBook.clone());
                 p.closeInventory();
                 p.sendMessage("§eYou withdrew the ability book.");
-            }
-            // Absorb slot (slot 8)
-            else if (slot == 8) {
+            } else if (slot == 8) {
                 absorbAbility();
                 p.closeInventory();
             }
-            // Any other slot is ignored
         }
     }
 
     private void openConfirmGUI() {
-        // Create new inventory for confirmation
+        isConfirmGui = true;
         Inventory confirmInv = Bukkit.createInventory(null, 9, CONFIRM_TITLE);
 
-        // Slot 4: the placed book (clone, with updated lore)
-        ItemStack placedBook = book.clone();
+        // Slot 4: placed book with lore
+        ItemStack placedBook = originalBook.clone();
         ItemMeta meta = placedBook.getItemMeta();
         meta.setLore(Arrays.asList("§7Ability: §f" + abilityName,
                 "§7Stage: §f" + stage,
@@ -111,7 +102,7 @@ public class AbsorptionGUI implements Listener {
         placedBook.setItemMeta(meta);
         confirmInv.setItem(4, placedBook);
 
-        // Slot 0: Withdraw button (redstone torch)
+        // Slot 0: Withdraw button
         ItemStack withdraw = new ItemStack(Material.REDSTONE_TORCH);
         ItemMeta wMeta = withdraw.getItemMeta();
         wMeta.setDisplayName("§c§lWithdraw Book");
@@ -119,7 +110,7 @@ public class AbsorptionGUI implements Listener {
         withdraw.setItemMeta(wMeta);
         confirmInv.setItem(0, withdraw);
 
-        // Slot 8: Absorb button (nether star)
+        // Slot 8: Absorb button
         ItemStack absorb = new ItemStack(Material.NETHER_STAR);
         ItemMeta aMeta = absorb.getItemMeta();
         aMeta.setDisplayName("§a§lAbsorb Power");
@@ -127,7 +118,7 @@ public class AbsorptionGUI implements Listener {
         absorb.setItemMeta(aMeta);
         confirmInv.setItem(8, absorb);
 
-        // Slot 7: Description (written book)
+        // Slot 7: Description book
         ItemStack desc = new ItemStack(Material.WRITTEN_BOOK);
         ItemMeta dMeta = desc.getItemMeta();
         dMeta.setDisplayName("§e§lAbsorption Info");
@@ -138,7 +129,6 @@ public class AbsorptionGUI implements Listener {
         desc.setItemMeta(dMeta);
         confirmInv.setItem(7, desc);
 
-        // Replace current GUI
         this.gui = confirmInv;
         player.openInventory(confirmInv);
     }
@@ -147,21 +137,16 @@ public class AbsorptionGUI implements Listener {
         if (absorbed) return;
         absorbed = true;
 
-        // Give ability to player
         plugin.getAbilityManager().giveAbility(player, abilityName);
-        // Set stage if needed (default stage 1)
         plugin.getAbilityManager().setCurrentStage(player, abilityName, stage);
 
-        // Dragon particles forming crown
         String hex = plugin.getConfigUtils().getColourHex("effects.crown-colour.stage" + stage, "AA00FF");
         ParticleUtils.spawnCrown(player.getLocation().add(0, 1.5, 0), hex);
 
-        // Success message
         player.sendMessage(plugin.getConfigUtils().getMessage("book-absorbed")
                 .replace("%ability%", abilityName));
 
-        // Remove the book from inventory (already gone from GUI)
-        player.getInventory().removeItem(book);
+        player.getInventory().removeItem(originalBook);
     }
 
     @EventHandler
@@ -170,8 +155,7 @@ public class AbsorptionGUI implements Listener {
         if (!(event.getPlayer() instanceof Player p)) return;
         if (!p.equals(player)) return;
 
-        // If not absorbed and we are in confirm GUI, and the book is still there, return it
-        if (!absorbed && gui.getTitle().equals(CONFIRM_TITLE)) {
+        if (!absorbed && isConfirmGui) {
             ItemStack remainingBook = gui.getItem(4);
             if (remainingBook != null && remainingBook.getType() != Material.AIR) {
                 p.getInventory().addItem(remainingBook);
@@ -179,8 +163,8 @@ public class AbsorptionGUI implements Listener {
             }
         }
 
-        // Unregister listener to avoid memory leaks
+        // Unregister listener
         InventoryClickEvent.getHandlerList().unregister(this);
         InventoryCloseEvent.getHandlerList().unregister(this);
     }
-    }
+}
