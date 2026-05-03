@@ -30,8 +30,6 @@ messages:
   soul-exchange-start: "&5You have possessed %target% for 30 seconds!"
   soul-exchange-end: "&5Soul exchange ended."
   soul-exchange-body-lost: "&cYour body has been taken over!"
-  drop-warning: "&c&l⚠ You cannot drop this ancient book! It will vanish if you try again."
-  drop-blocked: "&cThe book is bound to you – it cannot be thrown away."
   invalid-ability-book: "&cInvalid ability book!"
 
 # Particle and visual effects
