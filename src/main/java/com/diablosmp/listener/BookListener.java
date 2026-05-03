@@ -4,8 +4,6 @@ import com.diablosmp.DiabloSmpPlugin;
 import com.diablosmp.gui.AbsorptionGUI;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,13 +13,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 public class BookListener implements Listener {
     private final DiabloSmpPlugin plugin;
-    private final Map<UUID, Long> lastDropWarning = new HashMap<>();
 
     public BookListener(DiabloSmpPlugin plugin) {
         this.plugin = plugin;
@@ -42,25 +35,13 @@ public class BookListener implements Listener {
 
     @EventHandler
     public void onDropBook(PlayerDropItemEvent event) {
+        // No restrictions – allow dropping
+        // We still need to ensure the book is an ability book, but we don't cancel.
         ItemStack item = event.getItemDrop().getItemStack();
         if (item.getType() != Material.ENCHANTED_BOOK) return;
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !meta.getPersistentDataContainer().has(
                 new NamespacedKey(plugin, "ability"), PersistentDataType.STRING)) return;
-
-        Player p = event.getPlayer();
-        UUID uid = p.getUniqueId();
-        long now = System.currentTimeMillis();
-        if (!lastDropWarning.containsKey(uid) || (now - lastDropWarning.get(uid)) > 60000) {
-            lastDropWarning.put(uid, now);
-            // Use SMOKE instead of SMOKE_LARGE (compatible with 1.21)
-            p.getWorld().spawnParticle(Particle.SMOKE, p.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
-            p.playSound(p.getLocation(), Sound.ENTITY_GHAST_SHOOT, 1.0f, 1.2f);
-            p.sendMessage(plugin.getConfigUtils().getMessage("drop-warning"));
-            event.setCancelled(true);
-        } else {
-            p.sendMessage(plugin.getConfigUtils().getMessage("drop-blocked"));
-            event.setCancelled(true);
-        }
+        // Allow drop – do nothing, just let it happen.
     }
 }
